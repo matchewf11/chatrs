@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 pub fn create_app() -> Router {
     // can do get(_).post(_)
+    // make /users post
     Router::new()
         .route("/chats", get(chats_get))
         .route("/chats", post(chat_post))

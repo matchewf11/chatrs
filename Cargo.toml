@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = {version = "0.8.8", features = ["http2", "macros", "ws"] }
+axum = { version = "0.8.8", features = ["http2", "macros", "ws"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.49.0", features = ["full"] }
+sqlx = { version = "=0.8.6", features = ["runtime-tokio", "sqlite"] }
+rusqlite = "=0.32.1"
