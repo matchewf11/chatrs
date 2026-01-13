@@ -1,41 +1,75 @@
-use axum::Router;
+use axum::{
+    Json, Router, debug_handler,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing,
+};
+use serde::{Deserialize, Serialize};
+use sqlx::{Row, SqlitePool};
 
-pub fn router() -> axum::Router {
-    Router::new().route("/users", axum::routing::post(post))
+pub fn router(pool: SqlitePool) -> axum::Router {
+    Router::new()
+        .route("/users", routing::post(post))
+        .with_state(pool)
 }
 
-async fn post() {}
+#[derive(Deserialize)]
+struct PostRequest {
+    username: String,
+    password: String,
+}
 
-// CREATE TABLE IF NOT EXISTS users (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     username TEXT NOT NULL UNIQUE,
-//     password_hash TEXT NOT NULL,
-//     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     last_active TEXT,
-//     CHECK (length(username) > 2)
-// )
-// CREATE TABLE IF NOT EXISTS rooms (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     name TEXT NOT NULL UNIQUE,
-//     created_by INTEGER NOT NULL,
-//     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-// )
-// CREATE TABLE IF NOT EXISTS chats (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     room_id INTEGER NOT NULL,
-//     author_id INTEGER NOT NULL,
-//     body TEXT NOT NULL,
-//     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     CHECK (length(body) > 0),
-//     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-//     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-// )
-// CREATE TABLE IF NOT EXISTS room_members (
-//     user_id INTEGER NOT NULL,
-//     room_id INTEGER NOT NULL,
-//     joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     PRIMARY KEY (user_id, room_id),
-//     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-//     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-// )
+#[derive(Serialize)]
+struct PostResponse {
+    message: String,
+    username: String,
+    created_at: String,
+    id: u64,
+}
+
+struct DbErr(sqlx::Error);
+
+impl IntoResponse for DbErr {
+    fn into_response(self) -> Response {
+        match self.0 {
+            sqlx::Error::Database(db_err) => {
+                (StatusCode::BAD_REQUEST, db_err.message().to_string())
+            }
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal database error".to_string(),
+            ),
+        }
+        .into_response()
+    }
+}
+
+#[debug_handler]
+async fn post(
+    State(pool): State<SqlitePool>,
+    Json(data): Json<PostRequest>,
+) -> Result<Json<PostResponse>, DbErr> {
+    let row = sqlx::query(
+        r"
+        INSERT INTO users (username, password)
+        VALUES (?, ?)
+        RETURNING id, created_at
+        ",
+    )
+    .bind(data.username.clone())
+    .bind(data.password)
+    .fetch_one(&pool)
+    .await
+    .map_err(DbErr)?;
+
+    let id = row.get("id");
+    let created_at = row.get("created_at");
+
+    Ok(Json::from(PostResponse {
+        message: "Successfully Posted User".to_string(),
+        username: data.username,
+        created_at,
+        id,
+    }))
+}

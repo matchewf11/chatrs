@@ -24,7 +24,7 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
+            password TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             last_active TEXT,
             CHECK (length(username) > 2)
@@ -80,5 +80,20 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
     .execute(&pool)
     .await
     .unwrap();
+
+    sqlx::query(
+        r"
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            expires_at TEXT NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, '+1 hour')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+        ",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
     Ok(pool)
 }
