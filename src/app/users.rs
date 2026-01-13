@@ -1,4 +1,10 @@
-pub async fn post() {}
+use axum::Router;
+
+pub fn router() -> axum::Router {
+    Router::new().route("/users", axum::routing::post(post))
+}
+
+async fn post() {}
 
 // CREATE TABLE IF NOT EXISTS users (
 //     id INTEGER PRIMARY KEY AUTOINCREMENT,

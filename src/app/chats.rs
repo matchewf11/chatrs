@@ -1,13 +1,19 @@
-use axum::{Json, debug_handler};
+use axum::{Json, Router, debug_handler};
 use serde::{Deserialize, Serialize};
 
+pub fn router() -> Router {
+    Router::new()
+        .route("/chats", axum::routing::get(get))
+        .route("/chats", axum::routing::post(post))
+}
+
 #[derive(Serialize)]
-pub struct ChatsGet {
+struct ChatsGet {
     body: String,
 }
 
 #[debug_handler]
-pub async fn get() -> Json<ChatsGet> {
+async fn get() -> Json<ChatsGet> {
     println!("[GET] /chats");
     Json::from(ChatsGet {
         body: "This is the first message".to_string(),
@@ -15,17 +21,17 @@ pub async fn get() -> Json<ChatsGet> {
 }
 
 #[derive(Deserialize)]
-pub struct ChatPost {
+struct ChatPost {
     body: String,
 }
 
 #[derive(Serialize)]
-pub struct ChatPostReturn {
+struct ChatPostReturn {
     body: String,
 }
 
 #[debug_handler]
-pub async fn post(Json(payload): Json<ChatPost>) -> Json<ChatPostReturn> {
+async fn post(Json(payload): Json<ChatPost>) -> Json<ChatPostReturn> {
     println!("[POST] /chats");
     Json::from(ChatPostReturn { body: payload.body })
 }
