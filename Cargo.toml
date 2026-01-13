@@ -9,4 +9,3 @@ serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.49.0", features = ["full"] }
 sqlx = { version = "=0.8.6", features = ["runtime-tokio", "sqlite"] }
 rusqlite = "=0.32.1"
-rand = "0.9.2"
