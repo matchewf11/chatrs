@@ -43,3 +43,7 @@ async fn post(State(pool): State<SqlitePool>, Json(data): Json<PostRequest>) -> 
     let expires_at = row.get("expires_at");
     Json::from(PostResponse { token, expires_at })
 }
+
+fn _generate_token() -> String {
+    todo!();
+}
