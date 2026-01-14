@@ -1,4 +1,5 @@
 use axum::{Json, Router, debug_handler, extract::State, routing};
+use rand::prelude::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::{Row, SqlitePool};
 
@@ -30,10 +31,10 @@ async fn post(State(pool): State<SqlitePool>, Json(data): Json<PostRequest>) -> 
         )
         RETURNING token, expires_at
         ";
-    let token = "foo";
 
+    // get optional
     let row = sqlx::query(sql)
-        .bind(token)
+        .bind(generate_token())
         .bind(data.username)
         .bind(data.password)
         .fetch_one(&pool)
@@ -44,6 +45,9 @@ async fn post(State(pool): State<SqlitePool>, Json(data): Json<PostRequest>) -> 
     Json::from(PostResponse { token, expires_at })
 }
 
-fn _generate_token() -> String {
-    todo!();
+fn generate_token() -> String {
+    let mut rng = rand::rng();
+    (0..20)
+        .map(|_| rng.sample(rand::distr::Alphanumeric) as char)
+        .collect()
 }

@@ -1,6 +1,7 @@
 use axum::Router;
 use sqlx::SqlitePool;
 
+mod auth;
 mod chats;
 mod rooms;
 mod sessions;
@@ -11,7 +12,6 @@ pub fn new(pool: SqlitePool) -> Router {
         Router::merge(rooms::router(pool.clone()), sessions::router(pool.clone())),
         Router::merge(chats::router(), users::router(pool)),
     )
-
     // can do get(_).post(_)
     // make /users post
 }

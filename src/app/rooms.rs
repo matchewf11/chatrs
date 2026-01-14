@@ -1,69 +1,64 @@
-use axum::Router;
+use crate::app::auth;
+use axum::{Extension, Json, Router, debug_handler, extract::State, middleware, routing};
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
-pub fn router(_pool: SqlitePool) -> Router {
+pub fn router(pool: SqlitePool) -> Router {
     Router::new()
+        .route("/rooms", routing::post(post))
+        .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
+        .with_state(pool)
 }
 
-// .route("/rooms", routing::post(post))
-// .with_state(pool)
+#[derive(Deserialize)]
+struct PostRequest {
+    name: String,
+}
 
-// #[derive(Deserialize)]
-// struct PostRequest {
-//     name: String,
-// }
-//
-// #[derive(Serialize)]
-// struct PostResponse;
-//
-// #[debug_handler]
-// async fn post(
-//     State(_pool): State<SqlitePool>,
-//     Json(_data): Json<PostRequest>,
-// ) -> Json<PostResponse> {
-//     let sql_a = r"
-//         INSERT INTO rooms (name, created_by)
-//         VALUES (?, ?)
-//         ";
-//
-//     let sql_b = r"
-//         INSERT INTO room_memebers (user_id, room_id)
-//         VALUES ()
-//         ";
-//
-//     todo!();
-// }
+#[derive(Serialize)]
+struct PostResponse;
 
-// CREATE TABLE IF NOT EXISTS users (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     username TEXT NOT NULL UNIQUE,
-//     password_hash TEXT NOT NULL,
-//     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     last_active TEXT,
-//     CHECK (length(username) > 2)
-// )
-// CREATE TABLE IF NOT EXISTS rooms (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     name TEXT NOT NULL UNIQUE,
-//     created_by INTEGER NOT NULL,
-//     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-// )
-// CREATE TABLE IF NOT EXISTS chats (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     room_id INTEGER NOT NULL,
-//     author_id INTEGER NOT NULL,
-//     body TEXT NOT NULL,
-//     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     CHECK (length(body) > 0),
-//     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-//     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-// )
-// CREATE TABLE IF NOT EXISTS room_members (
-//     user_id INTEGER NOT NULL,
-//     room_id INTEGER NOT NULL,
-//     joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     PRIMARY KEY (user_id, room_id),
-//     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-//     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-// )
+#[debug_handler]
+async fn post(
+    State(pool): State<SqlitePool>,
+    Extension(user_id): Extension<u64>,
+    Json(data): Json<PostRequest>,
+) -> Json<PostResponse> {
+
+
+
+    todo!();
+    // CREATE TABLE IF NOT EXISTS users (
+    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    //     username TEXT NOT NULL UNIQUE,
+    //     password_hash TEXT NOT NULL,
+    //     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    //     last_active TEXT,
+    //     CHECK (length(username) > 2)
+    // )
+    // CREATE TABLE IF NOT EXISTS rooms (
+    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    //     name TEXT NOT NULL UNIQUE,
+    //     created_by INTEGER NOT NULL,
+    //     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    //     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    // )
+    // CREATE TABLE IF NOT EXISTS chats (
+    //     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    //     room_id INTEGER NOT NULL,
+    //     author_id INTEGER NOT NULL,
+    //     body TEXT NOT NULL,
+    //     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    //     CHECK (length(body) > 0),
+    //     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    //     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+    // )
+    // CREATE TABLE IF NOT EXISTS room_members (
+    //     user_id INTEGER NOT NULL,
+    //     room_id INTEGER NOT NULL,
+    //     joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    //     PRIMARY KEY (user_id, room_id),
+    //     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    //     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+    // )
+}
