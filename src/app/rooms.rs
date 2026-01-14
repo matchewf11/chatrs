@@ -8,7 +8,7 @@ use axum::{
     routing,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, Row, SqlitePool};
+use sqlx::{Row, SqlitePool};
 
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
@@ -29,10 +29,16 @@ struct PostResponse {
     created_at: String,
 }
 
-struct PostErr;
+struct PostErr(sqlx::Error);
+
 impl IntoResponse for PostErr {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, "internal server error").into_response()
+        let err = self.0;
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("internal server error: {}", err),
+        )
+            .into_response()
     }
 }
 
@@ -42,7 +48,7 @@ async fn post(
     Extension(user_id): Extension<i64>,
     Json(data): Json<PostRequest>,
 ) -> Result<Json<PostResponse>, PostErr> {
-    let mut tx = pool.begin().await.map_err(|_| PostErr)?;
+    let mut tx = pool.begin().await.map_err(PostErr)?;
 
     let sql_1 = r"
         INSERT INTO rooms (name, created_by)
@@ -55,7 +61,7 @@ async fn post(
         .bind(user_id)
         .fetch_one(&mut *tx)
         .await
-        .map_err(|_| PostErr)?;
+        .map_err(PostErr)?;
 
     let room_id: i64 = row.get("id");
     let created_at = row.get("created_at");
@@ -69,9 +75,9 @@ async fn post(
         .bind(room_id)
         .execute(&mut *tx)
         .await
-        .map_err(|_| PostErr)?;
+        .map_err(PostErr)?;
 
-    tx.commit().await.map_err(|_| PostErr)?;
+    tx.commit().await.map_err(PostErr)?;
 
     Ok(Json::from(PostResponse {
         message: "Successfully Posted Room".to_string(),

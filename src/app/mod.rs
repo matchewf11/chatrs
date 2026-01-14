@@ -10,7 +10,7 @@ mod users;
 pub fn new(pool: SqlitePool) -> Router {
     Router::merge(
         Router::merge(rooms::router(pool.clone()), sessions::router(pool.clone())),
-        Router::merge(chats::router(), users::router(pool)),
+        Router::merge(chats::router(pool.clone()), users::router(pool)),
     )
     // can do get(_).post(_)
     // make /users post
