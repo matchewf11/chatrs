@@ -2,15 +2,19 @@ use axum::{
     Extension, Json, Router, debug_handler,
     extract::State,
     http::StatusCode,
+    middleware,
     response::{IntoResponse, Response},
     routing,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{Row, SqlitePool};
 
+use crate::app::auth;
+
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
         .route("/chats", routing::post(post))
+        .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
         .with_state(pool)
 }
 
@@ -26,17 +30,18 @@ struct PostResponse {
 }
 
 enum PostErr {
-    InternalServerError,
+    InternalServerError(sqlx::Error),
     UserNotInRoom,
 }
 
 impl IntoResponse for PostErr {
     fn into_response(self) -> Response {
         match self {
-            Self::InternalServerError => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal server error")
-            }
-            Self::UserNotInRoom => (StatusCode::UNAUTHORIZED, "not in the room"),
+            Self::InternalServerError(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("internal server error: {}", err),
+            ),
+            Self::UserNotInRoom => (StatusCode::UNAUTHORIZED, "not in the room".to_string()),
         }
         .into_response()
     }
@@ -52,7 +57,7 @@ async fn post(
         r"
         SELECT EXISTS (
             SELECT 1
-            FROM room_memebers
+            FROM room_members
             WHERE
                 room_id = (SELECT id FROM rooms WHERE name = ?) AND
                 user_id = ?
@@ -63,7 +68,7 @@ async fn post(
     .bind(user_id)
     .fetch_one(&pool)
     .await
-    .map_err(|_| PostErr::InternalServerError)?
+    .map_err(PostErr::InternalServerError)?
     .get("is_user_in_room");
     if !is_user_in_room {
         return Err(PostErr::UserNotInRoom);
@@ -72,7 +77,7 @@ async fn post(
     let mut tx = pool
         .begin()
         .await
-        .map_err(|_| PostErr::InternalServerError)?;
+        .map_err(PostErr::InternalServerError)?;
 
     sqlx::query(
         r"
@@ -85,19 +90,19 @@ async fn post(
     .bind(data.body)
     .execute(&mut *tx)
     .await
-    .map_err(|_| PostErr::InternalServerError)?;
+    .map_err(PostErr::InternalServerError)?;
 
     sqlx::query(
         r"
         UPDATE users
         SET last_active = CURRENT_TIMESTAMP
-        WHERE user_id = ?
+        WHERE id = ?
         ",
     )
     .bind(user_id)
     .execute(&mut *tx)
     .await
-    .map_err(|_| PostErr::InternalServerError)?;
+    .map_err(PostErr::InternalServerError)?;
 
     sqlx::query(
         r"
@@ -112,11 +117,11 @@ async fn post(
     .bind(data.room)
     .execute(&mut *tx)
     .await
-    .map_err(|_| PostErr::InternalServerError)?;
+    .map_err(PostErr::InternalServerError)?;
 
     tx.commit()
         .await
-        .map_err(|_| PostErr::InternalServerError)?;
+        .map_err(PostErr::InternalServerError)?;
 
     Ok(Json::from(PostResponse {
         message: "Posted a Message".to_string(),

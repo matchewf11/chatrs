@@ -43,12 +43,11 @@ code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:3000/roo
 	-d "{ \"name\": \"$room\" }")
 assert_eq "$code" "200"
 
-
-
-
 echo "TESTING [POST] /chats"
-assert_eq "1" "0"
-
-# test chats
+code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:3000/chats" \
+	-H "Authorization: Bearer $token" \
+	-H "Content-Type: application/json" \
+	-d "{ \"room\": \"$room\", \"body\": \"Hello\"}")
+assert_eq "$code" "200"
 
 echo "All Tests Passed"
