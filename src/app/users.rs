@@ -28,9 +28,9 @@ struct PostResponse {
     id: u64,
 }
 
-struct DbErr(sqlx::Error);
+struct PostErr(sqlx::Error);
 
-impl IntoResponse for DbErr {
+impl IntoResponse for PostErr {
     fn into_response(self) -> Response {
         match self.0 {
             sqlx::Error::Database(db_err) => {
@@ -49,7 +49,7 @@ impl IntoResponse for DbErr {
 async fn post(
     State(pool): State<SqlitePool>,
     Json(data): Json<PostRequest>,
-) -> Result<Json<PostResponse>, DbErr> {
+) -> Result<Json<PostResponse>, PostErr> {
     let row = sqlx::query(
         r"
         INSERT INTO users (username, password)
@@ -61,7 +61,7 @@ async fn post(
     .bind(data.password)
     .fetch_one(&pool)
     .await
-    .map_err(DbErr)?;
+    .map_err(PostErr)?;
 
     let id = row.get("id");
     let created_at = row.get("created_at");
