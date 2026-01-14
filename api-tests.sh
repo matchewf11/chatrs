@@ -11,10 +11,10 @@ curl -X POST "http://localhost:3000/sessions" \
 	-d '{ "username": "matchew", "password": "foobar" }' | jq
 
 echo "Testing POST /rooms without auth (should fail)"
-curl -vX POST "http://localhost:3000/rooms"
+curl -X POST "http://localhost:3000/rooms"
 
 echo "Testing POST /rooms with auth"
-curl -vX POST "http://localhost:3000/rooms" \
-	-H "Authorization: Bearer 0sHJ1PXzG4QzT7nU5M4M" \
+curl -X POST "http://localhost:3000/rooms" \
+	-H "Authorization: Bearer EFJXEUagNjvnysD5hz5l" \
 	-H "Content-Type: application/json" \
 	-d '{ "name": "room_test" }'

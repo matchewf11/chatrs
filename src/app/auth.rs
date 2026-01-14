@@ -18,7 +18,7 @@ pub async fn auth(
         .and_then(|s| s.strip_prefix("Bearer "))
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let user_id: u64 = sqlx::query(
+    let user_id: i64 = sqlx::query(
         r"
         SELECT user_id
         FROM sessions
