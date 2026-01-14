@@ -71,6 +71,7 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
             user_id INTEGER NOT NULL,
             room_id INTEGER NOT NULL,
             joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            last_active TEXT,
             PRIMARY KEY (user_id, room_id),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
