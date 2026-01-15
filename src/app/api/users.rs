@@ -9,7 +9,7 @@ use sqlx::{Row, SqlitePool};
 
 pub fn router(pool: SqlitePool) -> axum::Router {
     Router::new()
-        .route("/users", routing::post(post))
+        .route("/api/users", routing::post(post))
         .with_state(pool)
 }
 

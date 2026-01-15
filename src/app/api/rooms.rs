@@ -1,4 +1,4 @@
-use crate::app::auth;
+use crate::app::api::auth;
 use axum::{
     Extension, Json, Router, debug_handler,
     extract::{Path, State},
@@ -12,8 +12,8 @@ use sqlx::{Row, SqlitePool};
 
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
-        .route("/rooms", routing::post(post))
-        .route("/rooms/{id}", routing::post(join))
+        .route("/api/rooms", routing::post(post))
+        .route("/api/rooms/{id}", routing::post(join))
         .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
         .with_state(pool)
 }

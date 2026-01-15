@@ -13,7 +13,7 @@ assert_neq() {
 	[[ "$1" != "$2" ]] || fail "$1 == $2"
 }
 
-base_url="http://localhost:3000"
+base_url="http://localhost:3000/api"
 username="user_$(date +%s)"
 password="foobar"
 room="room_$(date +%s)"

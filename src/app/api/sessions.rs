@@ -11,7 +11,7 @@ use sqlx::{Row, SqlitePool};
 
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
-        .route("/sessions", routing::post(post))
+        .route("/api/sessions", routing::post(post))
         .with_state(pool)
 }
 

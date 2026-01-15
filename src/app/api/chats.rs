@@ -9,11 +9,11 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{Row, SqlitePool};
 
-use crate::app::auth;
+use crate::app::api::auth;
 
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
-        .route("/chats", routing::post(post))
+        .route("/api/chats", routing::post(post))
         .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
         .with_state(pool)
 }
