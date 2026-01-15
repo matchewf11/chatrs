@@ -1,7 +1,7 @@
 use crate::app::auth;
 use axum::{
     Extension, Json, Router, debug_handler,
-    extract::State,
+    extract::{Path, State},
     http::StatusCode,
     middleware,
     response::{IntoResponse, Response},
@@ -13,8 +13,49 @@ use sqlx::{Row, SqlitePool};
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
         .route("/rooms", routing::post(post))
+        .route("/rooms/{id}", routing::post(join))
         .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
         .with_state(pool)
+}
+
+struct JoinErr(sqlx::Error);
+impl IntoResponse for JoinErr {
+    fn into_response(self) -> Response {
+        let err = self.0;
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("internal server error: {}", err),
+        )
+            .into_response()
+    }
+}
+
+#[derive(Serialize)]
+struct JoinResponse {
+    message: String,
+}
+
+#[debug_handler]
+async fn join(
+    State(pool): State<SqlitePool>,
+    Extension(user_id): Extension<i64>,
+    Path(room_id): Path<i64>,
+) -> Result<Json<JoinResponse>, JoinErr> {
+    sqlx::query(
+        r"
+        INSERT INTO room_members (user_id, room_id)
+        VALUES (?, ?)
+        ",
+    )
+    .bind(user_id)
+    .bind(room_id)
+    .execute(&pool)
+    .await
+    .map_err(JoinErr)?;
+
+    Ok(Json::from(JoinResponse {
+        message: format!("Joined Room: {}", room_id),
+    }))
 }
 
 #[derive(Deserialize)]

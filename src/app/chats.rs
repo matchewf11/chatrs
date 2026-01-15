@@ -74,10 +74,7 @@ async fn post(
         return Err(PostErr::UserNotInRoom);
     }
 
-    let mut tx = pool
-        .begin()
-        .await
-        .map_err(PostErr::InternalServerError)?;
+    let mut tx = pool.begin().await.map_err(PostErr::InternalServerError)?;
 
     sqlx::query(
         r"
@@ -119,9 +116,7 @@ async fn post(
     .await
     .map_err(PostErr::InternalServerError)?;
 
-    tx.commit()
-        .await
-        .map_err(PostErr::InternalServerError)?;
+    tx.commit().await.map_err(PostErr::InternalServerError)?;
 
     Ok(Json::from(PostResponse {
         message: "Posted a Message".to_string(),
