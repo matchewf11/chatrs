@@ -57,4 +57,9 @@ code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$base_url/chats" \
 	-d "{ \"room\": \"$room\", \"body\": \"Hello\"}")
 assert_eq "$code" "200"
 
+echo "TESTING [GET] /rooms"
+code=$(curl -s -o /dev/null -w "%{http_code}" "$base_url/rooms" \
+	-H "Authorization: Bearer $token")
+assert_eq "$code" "200"
+
 echo "All Tests Passed"

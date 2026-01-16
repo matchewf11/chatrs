@@ -14,8 +14,43 @@ pub fn router(pool: SqlitePool) -> Router {
     Router::new()
         .route("/api/rooms", routing::post(post))
         .route("/api/rooms/{id}", routing::post(join))
+        .route("/api/rooms", routing::get(get))
         .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
         .with_state(pool)
+}
+
+#[derive(Serialize)]
+struct GetRow {
+    id: i64,
+    name: String,
+    created_by: i64,
+    created_at: String,
+}
+struct GetErr;
+impl IntoResponse for GetErr {
+    fn into_response(self) -> Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, "internal server error").into_response()
+    }
+}
+
+#[debug_handler]
+async fn get(State(pool): State<SqlitePool>) -> Result<Json<Vec<GetRow>>, GetErr> {
+    // Extension(user_id): Extension<i64>,
+    // add if this user has permissions to that room
+    let sql = "SELECT id, name, created_by, created_at FROM rooms";
+    let get_rows = sqlx::query(sql)
+        .fetch_all(&pool)
+        .await
+        .map_err(|_| GetErr)?
+        .iter()
+        .map(|row| GetRow {
+            id: row.get("id"),
+            name: row.get("name"),
+            created_by: row.get("created_by"),
+            created_at: row.get("created_at"),
+        })
+        .collect();
+    Ok(Json(get_rows))
 }
 
 struct JoinErr(sqlx::Error);
