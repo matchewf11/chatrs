@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatrs</title>
+  </head>
+  <body>
+    <h1>Welcome to Chatrs!</h1>
+
+    <hr>
+    <p id="signup-message">Signup</p>
+    <form id="signup-form">
+      <label for="signup-username" >Username:</label>
+      <input id="signup-username" type="text" /><br>
+      <label for="signup-password" >Password:</label>
+      <input id="signup-password" type="password" /><br>
+      <input type="submit" />
+    </form>
+
+    <hr>
+    <p id="login-message" >Login</p>
+    <form id="login-form" >
+      <label for="login-username" >Username:</label>
+      <input id="login-username" type="text" /><br>
+      <label for="login-password" >Password:</label>
+      <input id="login-password" type="password" /><br>
+      <input type="submit" />
+    </form>
+
+    <script>
+      const signupForm = document.getElementById("signup-form");
+      const signupMessage = document.getElementById("signup-message");
+      signupForm.addEventListener("submit", async (eventObject) => {
+        eventObject.preventDefault();
+        const username = document.getElementById("signup-username").value;
+        const password = document.getElementById("signup-password").value;
+        try {
+          const res = await fetch("/api/users", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: username,
+              password: password,
+            }),
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            signupMessage.textContent = "Failed To Post User: " + text;
+            signupMessage.style.color = "red";
+            console.log("failed:", text);
+            return;
+          }
+          const data = await res.json();
+          signupMessage.textContent = "Posted User: " + JSON.stringify(data);
+          signupMessage.style.color = "green";
+          console.log(data);
+        } catch (e) {
+          signupMessage.textContent = "Failed To Post User";
+          signupMessage.style.color = "red";
+          console.log(e);
+        }
+      });
+
+      const loginForm = document.getElementById("login-form");
+      const loginMessage = document.getElementById("login-message");
+      loginForm.addEventListener("submit", async (eventObject) => {
+        eventObject.preventDefault();
+        const username = document.getElementById("login-username").value;
+        const password = document.getElementById("login-password").value;
+        try {
+          const res = await fetch("/api/sessions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: username,
+              password: password,
+            }),
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            loginMessage.textContent = "Failed to Login: " + text;
+            loginMessage.style.color = "red";
+            console.log("failed:", text);
+            return;
+          }
+
+          const data = await res.json();
+          loginMessage.textContent = "Logged In: " + JSON.stringify(data);
+          loginMessage.style.color = "green";
+          console.log(data);
+        } catch(err) {
+          loginMessage.textContent = "Failed: " + JSON.stringify(err);
+          loginMessage.style.color = "red";
+          console.log(err);
+        }
+      });
+    </script>
+  </body>
+</html>
