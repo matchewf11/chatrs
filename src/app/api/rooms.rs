@@ -25,6 +25,9 @@ struct GetRow {
     name: String,
     created_by: i64,
     created_at: String,
+    joined: bool,
+    joined_at: Option<String>,
+    last_active: Option<String>,
 }
 struct GetErr;
 impl IntoResponse for GetErr {
@@ -34,11 +37,30 @@ impl IntoResponse for GetErr {
 }
 
 #[debug_handler]
-async fn get(State(pool): State<SqlitePool>) -> Result<Json<Vec<GetRow>>, GetErr> {
-    // Extension(user_id): Extension<i64>,
+async fn get(
+    State(pool): State<SqlitePool>,
+    Extension(user_id): Extension<i64>,
+) -> Result<Json<Vec<GetRow>>, GetErr> {
     // add if this user has permissions to that room
-    let sql = "SELECT id, name, created_by, created_at FROM rooms";
+    let sql = r"
+        SELECT
+            rooms.id,
+            rooms.name,
+            rooms.created_by,
+            rooms.created_at,
+            CASE
+                WHEN room_members.joined_at IS NOT NULL THEN 1
+                ELSE 0
+            END as joined,
+            room_members.joined_at, -- option
+            room_members.last_active -- option
+        FROM rooms
+        LEFT JOIN room_members ON
+            rooms.id = room_members.room_id AND
+            room_members.user_id = ?;
+        ";
     let get_rows = sqlx::query(sql)
+        .bind(user_id)
         .fetch_all(&pool)
         .await
         .map_err(|_| GetErr)?
@@ -48,6 +70,9 @@ async fn get(State(pool): State<SqlitePool>) -> Result<Json<Vec<GetRow>>, GetErr
             name: row.get("name"),
             created_by: row.get("created_by"),
             created_at: row.get("created_at"),
+            joined: row.get("joined"),
+            joined_at: row.get("joined_at"),
+            last_active: row.get("last_active"),
         })
         .collect();
     Ok(Json(get_rows))
