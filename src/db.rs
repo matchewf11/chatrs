@@ -1,23 +1,44 @@
-use sqlx::SqlitePool;
-use std::{
-    error::Error,
-    fmt::{self, Display, Formatter},
-};
+//! Sets up a database connection and initialization.
 
+use sqlx::SqlitePool;
+use std::error;
+use std::fmt::{self, Display, Formatter};
+
+/// Error value for initializing the database.
 #[derive(Debug)]
-pub struct FailedConnection;
-impl Error for FailedConnection {}
-impl Display for FailedConnection {
+pub enum Error {
+    /// Could not open the database.
+    FailedConnection,
+    /// Error within the server.
+    InternalServerErorr,
+}
+
+impl error::Error for Error {}
+
+impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Failed to Connect to Db")
+        match self {
+            Error::FailedConnection => write!(f, "failed to connect to the database"),
+            Error::InternalServerErorr => write!(f, "internal server error"),
+        }
     }
 }
 
-pub async fn new() -> Result<SqlitePool, FailedConnection> {
+/// Initializes a database, opening it
+/// and creating initial tables.
+///
+/// # Examples
+/// ```rust
+/// #[tokio::main]
+/// async fn main() {
+///     let _db = chatrs::db::new().await.unwrap();
+/// }
+/// ```
+pub async fn new() -> Result<SqlitePool, Error> {
     // connect_with for options
     let pool = SqlitePool::connect("sqlite::memory:")
         .await
-        .map_err(|_| FailedConnection)?;
+        .map_err(|_| Error::FailedConnection)?;
 
     sqlx::query(
         r"
@@ -33,7 +54,8 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
     )
     .execute(&pool)
     .await
-    .unwrap();
+    .map_err(|_| Error::InternalServerErorr)?;
+
     sqlx::query(
         r"
         CREATE TABLE IF NOT EXISTS rooms (
@@ -47,7 +69,8 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
     )
     .execute(&pool)
     .await
-    .unwrap();
+    .map_err(|_| Error::InternalServerErorr)?;
+
     sqlx::query(
         r"
         CREATE TABLE IF NOT EXISTS chats (
@@ -64,7 +87,8 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
     )
     .execute(&pool)
     .await
-    .unwrap();
+    .map_err(|_| Error::InternalServerErorr)?;
+
     sqlx::query(
         r"
         CREATE TABLE IF NOT EXISTS room_members (
@@ -80,7 +104,7 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
     )
     .execute(&pool)
     .await
-    .unwrap();
+    .map_err(|_| Error::InternalServerErorr)?;
 
     sqlx::query(
         r"
@@ -94,7 +118,29 @@ pub async fn new() -> Result<SqlitePool, FailedConnection> {
     )
     .execute(&pool)
     .await
-    .unwrap();
+    .map_err(|_| Error::InternalServerErorr)?;
 
     Ok(pool)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_new() {
+        let _r = new().await.unwrap();
+    }
+
+    #[test]
+    fn test_err() {
+        assert_eq!(
+            format!("{}", Error::FailedConnection),
+            "failed to connect to the database".to_string()
+        );
+        assert_eq!(
+            format!("{}", Error::InternalServerErorr),
+            "internal server error".to_string()
+        );
+    }
 }
