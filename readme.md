@@ -17,3 +17,9 @@
 
 <!-- // can do get(_).post(_) -->
 <!-- // make /users post -->
+
+I need to make rust, and shell tests
+
+Document the code
+
+Document the api
