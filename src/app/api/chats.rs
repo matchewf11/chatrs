@@ -14,8 +14,17 @@ use crate::app::api::auth;
 pub fn router(pool: SqlitePool) -> Router {
     Router::new()
         .route("/api/chats", routing::post(post))
+        .route("/api/chats", routing::get(get_all))
         .route_layer(middleware::from_fn_with_state(pool.clone(), auth::auth))
         .with_state(pool)
+}
+
+// struct GetAllResponse;
+
+// get all chats
+// from all rooms that you are in
+async fn get_all() {
+    todo!();
 }
 
 #[derive(Deserialize)]
