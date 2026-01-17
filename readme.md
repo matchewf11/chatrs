@@ -19,7 +19,8 @@
 <!-- // make /users post -->
 
 I need to make rust, and shell tests
-
 Document the code
-
 Document the api
+
+auth.rs  chats.rs  mod.rs  rooms.rs  sessions.rs  users.rs
+mod.rs  root.html

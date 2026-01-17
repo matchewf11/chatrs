@@ -11,7 +11,7 @@ use sqlx::{Row, SqlitePool};
 
 use crate::app::api::auth;
 
-pub fn router(pool: SqlitePool) -> Router {
+pub fn new(pool: SqlitePool) -> Router {
     Router::new()
         .route("/api/chats", routing::post(post))
         .route("/api/chats", routing::get(get_all))

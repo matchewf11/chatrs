@@ -13,7 +13,7 @@ mod client;
 
 /// Returns a router to manage the entire app.
 pub fn new(pool: SqlitePool) -> Router {
-    Router::merge(api::router(pool), client::router()).route(
+    Router::merge(api::new(pool), client::new()).route(
         "/health",
         routing::get(|| async {
             Json(json!({
