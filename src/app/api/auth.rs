@@ -35,3 +35,6 @@ pub async fn auth(
     req.extensions_mut().insert(user_id);
     Ok(next.run(req).await)
 }
+
+#[cfg(test)]
+mod tests {}

@@ -1,3 +1,5 @@
+//! Manages user sessions.
+
 use axum::{
     Json, Router, debug_handler,
     extract::State,
@@ -9,7 +11,8 @@ use rand::prelude::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::{Row, SqlitePool};
 
-pub fn router(pool: SqlitePool) -> Router {
+/// Returns a new router for the sessions api.
+pub fn new(pool: SqlitePool) -> Router {
     Router::new()
         .route("/api/sessions", routing::post(post))
         .with_state(pool)
@@ -61,10 +64,25 @@ async fn post(
     Ok(Json::from(PostResponse { token, expires_at }))
 }
 
-/// Absolute insecure garbage
 fn generate_token() -> String {
     let mut rng = rand::rng();
     (0..20)
         .map(|_| rng.sample(rand::distr::Alphanumeric) as char)
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+
+    fn test_new() {
+        panic!();
+    }
+
+    fn test_post_err() {
+        panic!();
+    }
+}
+
+// comments and tests
+// fix functions
+// for all 4 functions

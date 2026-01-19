@@ -31,12 +31,13 @@ impl Display for Error {
 /// ```rust
 /// #[tokio::main]
 /// async fn main() {
-///     let _db = chatrs::db::new().await.unwrap();
+///     let _db = chatrs::db::build().await.unwrap();
 /// }
 /// ```
-pub async fn new() -> Result<SqlitePool, Error> {
+pub async fn build() -> Result<SqlitePool, Error> {
     // connect_with for options
-    let pool = SqlitePool::connect("sqlite::memory:")
+    // let pool = SqlitePool::connect("sqlite::memory:")
+    let pool = SqlitePool::connect("foo.db")
         .await
         .map_err(|_| Error::FailedConnection)?;
 
@@ -128,8 +129,8 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_new() {
-        let _r = new().await.unwrap();
+    async fn test_build() {
+        let _r = build().await.unwrap();
     }
 
     #[test]

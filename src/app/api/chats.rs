@@ -23,7 +23,7 @@ pub fn new(pool: SqlitePool) -> Router {
 
 // get all chats
 // from all rooms that you are in
-async fn get_all() {
+async fn get_all(State(pool): State<SqlitePool>, Extension(user_id): Extension<i64>) {
     todo!();
 }
 

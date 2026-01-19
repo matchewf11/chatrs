@@ -1,5 +1,6 @@
 use axum::{
-    Json, Router, debug_handler, extract::State,
+    Json, Router, debug_handler,
+    extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing,
